@@ -2,16 +2,16 @@
 
 A Python implementation of the Aiyagari (1994) heterogeneous-agent incomplete-markets model, adapted from MATLAB code by [Oliko Vardishvili](https://github.com/ovardish/2022_Computational_Course_Code).
 
-Households face uninsurable idiosyncratic income shocks, save in a single risk-free asset subject to a borrowing constraint, and the equilibrium interest rate is determined by aggregate asset supply equalling capital demand from a representative firm.
+Households face uninsurable idiosyncratic income shocks, save in a single risk-free asset subject to a borrowing constraint. The equilibrium interest rate is determined by the asset market clearing condition, which we find by nested bisection search.
 
 > Aiyagari, S. R. (1994). "Uninsured Idiosyncratic Risk and Aggregate Saving." *Quarterly Journal of Economics* 109(3): 659–684.
 
 ## Algorithm
 
 1. **Income process** — discretize an AR(1) productivity process using the Rouwenhorst approximation (via `quantecon`)
-2. **Household problem** — for a given interest rate *r*, solve for the optimal savings policy via value function iteration on a finite asset grid
+2. **Household problem** — for a given interest rate *r*, solve for the optimal savings policy via value function iteration on a discrete asset grid
 3. **Stationary distribution** — iterate the joint distribution over (assets, productivity) until convergence
-4. **General equilibrium** — find the equilibrium *r* by bisection: stop when aggregate asset supply equals capital demand from a Cobb-Douglas firm
+4. **General equilibrium** — find the equilibrium *r* by bisection: stop when aggregate asset supply equals capital demand
 
 ## Parameters
 
