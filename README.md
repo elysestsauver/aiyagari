@@ -1,81 +1,55 @@
-# Aiyagari
+# Aiyagari (1994) Model — Value Function Iteration
 
-A Python implementation of the Aiyagari (1994) heterogeneous-agent
-incomplete-markets model. Households face uninsurable idiosyncratic income
-shocks, save in a single risk-free asset subject to a borrowing constraint,
-and the equilibrium interest rate is determined by aggregate asset supply
-equaling capital demand from a representative firm.
+A Python implementation of the Aiyagari (1994) heterogeneous-agent incomplete-markets model, adapted from MATLAB code by [Oliko Vardishvili](https://github.com/ovardish/2022_Computational_Course_Code).
 
-> Aiyagari, S. R. (1994). "Uninsured Idiosyncratic Risk and Aggregate
-> Saving." *Quarterly Journal of Economics* 109(3): 659–684.
+Households face uninsurable idiosyncratic income shocks, save in a single risk-free asset subject to a borrowing constraint, and the equilibrium interest rate is determined by aggregate asset supply equalling capital demand from a representative firm.
 
-## Layout
+> Aiyagari, S. R. (1994). "Uninsured Idiosyncratic Risk and Aggregate Saving." *Quarterly Journal of Economics* 109(3): 659–684.
+
+## Algorithm
+
+1. **Income process** — discretize an AR(1) productivity process using the Rouwenhorst approximation (via `quantecon`)
+2. **Household problem** — for a given interest rate *r*, solve for the optimal savings policy via value function iteration on a finite asset grid
+3. **Stationary distribution** — iterate the joint distribution over (assets, productivity) until convergence
+4. **General equilibrium** — find the equilibrium *r* by bisection: stop when aggregate asset supply equals capital demand from a Cobb-Douglas firm
+
+## Parameters
+
+| Parameter | Symbol | Value | Description |
+|---|---|---|---|
+| Risk aversion | γ | 3 | CRRA utility curvature |
+| Discount factor | β | 0.96 | |
+| Depreciation | δ | 0.08 | |
+| Capital share | α | 0.36 | Cobb-Douglas exponent |
+| Borrowing limit | b | −2 | Exogenous floor on assets |
+| Productivity states | n_z | 7 | Number of Markov states |
+| AR(1) persistence | ρ | 0.2 | |
+| Long-run std. dev. | σ_LR | 0.4 | Of log income |
+
+## Outputs
+
+Running the script produces three plots:
+
+- **Asset policy function** — next-period assets *k'* as a function of current assets *k*, for each productivity state
+- **Consumption policy function** — consumption *c* as a function of *k*, for each productivity state
+- **Stationary distribution** — marginal distribution of assets across households
+
+## Requirements
 
 ```
-.
-├── src/aiyagari/
-│   ├── income.py          # Markov approximations of AR(1): Tauchen, Rouwenhorst
-│   ├── household.py       # Household problem (value-function iteration)
-│   ├── distribution.py    # Stationary distribution over (a, z)
-│   └── equilibrium.py     # General-equilibrium loop for r
-├── tests/                 # pytest smoke tests
-├── notebooks/             # Jupyter notebooks for exploration
-└── data/                  # Empty; for any external data you bring in
+pip install numpy quantecon matplotlib
 ```
 
-## Setup
-
-### Option A: conda
+## Usage
 
 ```bash
-conda env create -f environment.yml
-conda activate aiyagari
-pip install -e .
+python aiyagari.py
 ```
 
-### Option B: pip + venv
+Equilibrium progress is printed at each bisection step:
 
-```bash
-python -m venv .venv
-source .venv/bin/activate
-pip install -e ".[dev]"
 ```
-
-After either, verify:
-
-```bash
-pytest                      # should pass
-jupyter lab notebooks/      # to open the walkthrough notebook
+k0 = 4.3021, k1 = 5.1847, r0 = 0.0208, r1 = 0.0183
+k0 = 4.3021, k1 = 4.7231, r0 = 0.0104, r1 = 0.0164
+...
 ```
-
-## Quick start
-
-```python
-from aiyagari.income import rouwenhorst
-from aiyagari.household import solve_household
-from aiyagari.distribution import stationary_distribution
-from aiyagari.equilibrium import find_equilibrium_r
-
-# 1. Discretize an AR(1) income process
-z_grid, P = rouwenhorst(n=7, rho=0.9, sigma=0.2)
-
-# 2. Solve the household problem at a candidate r
-V, policy = solve_household(z_grid, P, r=0.03, beta=0.96, gamma=2.0)
-
-# 3. Find the stationary distribution
-mu = stationary_distribution(policy, P)
-
-# 4. Or jump straight to general equilibrium
-r_star, K_star = find_equilibrium_r(z_grid, P, beta=0.96, gamma=2.0, alpha=0.36, delta=0.08)
-```
-
-The walkthrough notebook in `notebooks/01_aiyagari_walkthrough.ipynb`
-runs all of the above end-to-end with default parameters and produces the
-canonical asset-supply / capital-demand plot.
-
-## Status
-
-Initial scaffolding. The Markov approximation routines are complete; the
-household solver uses standard value-function iteration on a fixed grid
-(slow but reliable). EGM and Reiter linearization are good next steps for
-speed.
